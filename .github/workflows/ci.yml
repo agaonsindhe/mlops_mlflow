@@ -21,12 +21,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          PYTHONPATH=$PYTHONPATH:./src pytest
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-
+          PYTHONPATH=$PYTHONPATH:./src pytest
       - name: Run Tests
         env:
           PYTHONPATH: ./src
-        run: pytest
+        run: |
+          PYTHONPATH=$PYTHONPATH:./src pytest
