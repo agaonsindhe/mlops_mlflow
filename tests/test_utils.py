@@ -2,7 +2,6 @@
 Unit tests for the utils module.
 """
 import pandas as pd
-
 from src.utils import load_data, add_features
 
 
