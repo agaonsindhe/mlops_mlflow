@@ -1,3 +1,6 @@
 transformers
 pytest
 torch
+pylint
+pandas
+scikit-learn
