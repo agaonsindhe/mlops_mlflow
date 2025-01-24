@@ -2,6 +2,10 @@
 This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
+
 from math import sqrt
 import pickle
 import mlflow
