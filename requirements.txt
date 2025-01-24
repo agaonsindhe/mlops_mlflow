@@ -4,3 +4,4 @@ torch
 pylint
 pandas
 scikit-learn
+mlflow
