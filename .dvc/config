@@ -1,0 +1,7 @@
+[core]
+    remote = azure_remote
+['remote "gdrive_remote"']
+    url = gdrive://1CzaOh0Uh5MH1rRh9azGIsbY3vKIueMO7
+['remote "azure_remote"']
+    url = azure://dvc-data
+    connection_string = DefaultEndpointsProtocol=https;AccountName=dvcbits;AccountKey=xb5nrHF4a/EPolSk7gOooweYbl4ZmLfGweSkJwi8ez7cvdefkxjSX1JTR3AIpjpaz9ZLjZjnbcYV+AStQ052mw==;EndpointSuffix=core.windows.net
