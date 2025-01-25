@@ -8,3 +8,4 @@ mlflow
 dvc
 dvc[azure]
 azure-storage-blob
+pytest-mock

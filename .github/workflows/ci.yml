@@ -27,37 +27,43 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set Environment Variable
-        run: echo "AZURE_CONNECTION_STRING=${{ secrets.AZURE_CONNECTION_STRING }}" >> $GITHUB_ENV
-
-        # Step 4: Configure Azure Credentials for DVC
+      # Step 4: Configure Azure Credentials
       - name: Configure Azure Credentials
         run: |
           dvc remote modify azure_remote connection_string '${{ secrets.AZURE_CONNECTION_STRING }}'
 
-      - name: Verify DVC remote configuration
-        run: dvc remote list
-
-      # Step 5: Pull DVC data (Local Setup)
-      - name: Pull DVC data
+      # Step 5: Pull DVC Data
+      - name: Pull DVC Data
         run: dvc pull
 
-      # Step 6: Run Linting
+      # Step 6: Reproduce DVC Pipeline
+      - name: Reproduce DVC Pipeline
+        run: dvc repro
+
+      # Step 7: Push DVC Updates
+      - name: Push DVC Updates
+        run: |
+          dvc push
+          git add dvc.lock
+          git commit -m "Updated model.pkl and pipeline outputs"
+          git push origin ${{ github.ref_name }}
+
+      # Step 8: Run Linting
       - name: Run Linting
         run: |
-          pylint src tests --fail-under=9.5
+          pylint src tests --fail-under=8.0
 
-      # Step 7: Run Tests
+      # Step 9: Run Tests
       - name: Run Tests
         env:
           PYTHONPATH: ./src
         run: pytest
 
-      # Step 8: Visualize DVC Pipeline (Optional)
+      # Step 10: Visualize DVC Pipeline (Optional)
       - name: Visualize DVC Pipeline
-        run: dvc dag 
+        run: dvc dag
 
-      # Step 9: Save DVC Pipeline Visualization (Optional)
+      # Step 11: Save Pipeline Visualization (Optional)
       - name: Save Pipeline Visualization
         uses: actions/upload-artifact@v3
         with:

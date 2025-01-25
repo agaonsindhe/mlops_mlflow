@@ -59,7 +59,7 @@ def load_config(config_path="config.yaml"):
     except yaml.YAMLError as e:
         raise ValueError(f"Error parsing config file: {e}") from e
 
-def get_dataset_path(config):
+def get_config_path(config):
     """
     Dynamically determine the dataset path based on the config.
 
@@ -74,16 +74,16 @@ def get_dataset_path(config):
     """
     preferred_path = config["dataset"]["preferred_path"]
     fallback_path = config["dataset"]["fallback_path"]
-
+    model_path = config["model"]["path"]
     # Check if preferred file exists
-    if os.path.exists(preferred_path):
+    if os.path.exists(preferred_path) and os.path.exists(model_path):
         print(f"Using preferred dataset: {preferred_path}")
-        return preferred_path
+        return preferred_path, model_path
 
     # Check if fallback file exists
-    if os.path.exists(fallback_path):
+    if os.path.exists(fallback_path) and os.path.exists(model_path):
         print(f"Using fallback dataset: {fallback_path}")
-        return fallback_path
+        return fallback_path, model_path
 
     # Handle case for multiple files in directory
     dataset_dir = os.path.dirname(preferred_path)
