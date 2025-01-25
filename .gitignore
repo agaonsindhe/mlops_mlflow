@@ -5,4 +5,4 @@ pytest_cache/
 venv-mlflow/
 mlruns/
 /model.pkl
-.dvc/config
+.dvc/config.local
