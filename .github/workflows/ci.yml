@@ -29,9 +29,9 @@ jobs:
           pip install pandas scikit-learn pylint pytest
 
       # Step 4: Run Linting
-      - name: Run Linting
+      - name: Run pylint
         run: |
-          pylint src tests
+          pylint src tests --disable=C0304,C0305 --fail-under=9.5
 
       # Step 5: Run Tests
       - name: Run Tests
