@@ -2,12 +2,9 @@
 This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
-
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
-
 from math import sqrt
 import pickle
+import warnings
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -15,6 +12,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from src.utils import add_features
+
+
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
+
 
 def load_data(data_path):
     """

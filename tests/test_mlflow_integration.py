@@ -22,4 +22,4 @@ def test_mlflow_logging(mock_log_model, mock_log_metric, mock_log_param):
     mock_log_metric.assert_any_call("rmse", rmse)
     mock_log_metric.assert_any_call("r2", r2)
     mock_log_model.assert_called_once()
-
+    
