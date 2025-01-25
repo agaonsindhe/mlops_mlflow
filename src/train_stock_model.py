@@ -13,8 +13,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, explained_variance_score
-from src.utils import add_features
-
+from src.utils import add_features, load_config, get_dataset_path
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
 
@@ -46,20 +45,22 @@ def load_data(data_path):
     return data
 
 
-def train_and_evaluate(
-        data_path='data/stock_data_sample.csv',
-        model_path='model.pkl'
-):
+def train_and_evaluate(config_path="config.yaml", model_path="model.pkl"):
     """
     Train and evaluate a Linear Regression model.
 
     Args:
-        data_path (str): Path to the dataset.
+        config_path (str): Path to the configuration file.
         model_path (str): Path to save the trained model.
 
     Returns:
-        tuple: RMSE, R², MAE, training_time, evs scores.
+        tuple: (rmse, r2, mae, training_time, evs)
     """
+    # Load configuration
+    config = load_config(config_path)
+
+    # Get the dataset path dynamically
+    data_path = get_dataset_path(config)
 
     # Start an MLflow experiment
     mlflow.set_experiment("Stock Price Prediction")

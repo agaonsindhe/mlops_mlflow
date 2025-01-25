@@ -3,15 +3,19 @@ Unit tests for the train_stock_model module.
 """
 
 from src.train_stock_model import train_and_evaluate
+from src.utils import get_dataset_path, load_config
+
 
 def test_train_and_evaluate():
     """
-    Test the train_and_evaluate function for expected outputs.
+    Test the train_and_evaluate function for dynamic dataset paths.
     """
+
     rmse, r2,mae, training_time, evs = train_and_evaluate(
-        data_path='data/stock_data_sample.csv',
+        config_path="config.yaml",
         model_path='model.pkl'
     )
+
     # Validate RMSE is positive
     assert rmse > 0, "RMSE should be greater than 0"
 
@@ -33,7 +37,7 @@ def test_train_and_evaluate_with_features():
     """
     # Run the function with a sample dataset
     rmse, r2, mae, training_time, evs = train_and_evaluate(
-        data_path='data/stock_data_sample.csv',
+        config_path='config.yaml',
         model_path='model.pkl'
     )
 

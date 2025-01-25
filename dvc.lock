@@ -3,18 +3,18 @@ stages:
   train_model:
     cmd: python src/train_stock_model.py
     deps:
-    - path: data/stock_data_sample.csv
+    - path: data/stocks_df.csv
       hash: md5
-      md5: f1dda3d8d0157c9553c02582ca823c7b
-      size: 54199
+      md5: 75bc7d18328a47885cd9c7cde0b29cf6
+      size: 228772099
     - path: src/train_stock_model.py
       hash: md5
-      md5: e08e1b7289b7ba36628510147868fdfa
-      size: 3481
+      md5: d5b88f9b38f568c19391bbdfacbd39ef
+      size: 4728
     outs:
     - path: model.pkl
       hash: md5
-      md5: 73d2ea6266780f0c90f2b95ec078e631
+      md5: 901ebf7fddd4c3f008fb4c3a0689cc5d
       size: 707
   verify_model_output:
     cmd: echo "Verifying model.pkl is tracked"
@@ -28,5 +28,5 @@ stages:
     deps:
     - path: model.pkl
       hash: md5
-      md5: 73d2ea6266780f0c90f2b95ec078e631
+      md5: 901ebf7fddd4c3f008fb4c3a0689cc5d
       size: 707
