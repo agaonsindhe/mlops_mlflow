@@ -7,4 +7,4 @@ scikit-learn
 mlflow
 dvc
 dvc[azure]
-azure
+azure-storage
