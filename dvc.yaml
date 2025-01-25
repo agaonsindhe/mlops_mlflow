@@ -6,3 +6,11 @@ stages:
     - src/train_stock_model.py
     outs:
     - model.pkl
+  verify_model_output:
+    cmd: echo "Verifying model.pkl is tracked"
+    deps:
+    - model.pkl
+  evaluate_model:
+    cmd: echo "Evaluating the model"
+    deps:
+    - model.pkl

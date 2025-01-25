@@ -16,3 +16,17 @@ stages:
       hash: md5
       md5: 73d2ea6266780f0c90f2b95ec078e631
       size: 707
+  verify_model_output:
+    cmd: echo "Verifying model.pkl is tracked"
+    deps:
+    - path: model.pkl
+      hash: md5
+      md5: 73d2ea6266780f0c90f2b95ec078e631
+      size: 707
+  evaluate_model:
+    cmd: echo "Evaluating the model"
+    deps:
+    - path: model.pkl
+      hash: md5
+      md5: 73d2ea6266780f0c90f2b95ec078e631
+      size: 707

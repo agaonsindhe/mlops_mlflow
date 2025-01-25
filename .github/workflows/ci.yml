@@ -26,15 +26,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pandas scikit-learn pylint pytest
 
-      # Step 4: Run Linting
-      - name: Run pylint
+      # Step 4: Pull DVC data (Local Setup)
+      - name: Pull DVC data
+        run: dvc pull
+
+      # Step 5: Run Linting
+      - name: Run Linting
         run: |
-          pylint src tests --disable=C0304,C0305 --fail-under=9.5
+          pylint src tests --fail-under=9.5
 
-      # Step 5: Run Tests
+      # Step 6: Run Tests
       - name: Run Tests
         env:
           PYTHONPATH: ./src
         run: pytest
+
+      # Step 7: Visualize DVC Pipeline (Optional)
+      - name: Visualize DVC Pipeline
+        run: dvc dag --dot | dot -Tpng -o pipeline.png
+
+      # Step 8: Save DVC Pipeline Visualization (Optional)
+      - name: Save Pipeline Visualization
+        uses: actions/upload-artifact@v3
+        with:
+          name: dvc-pipeline
+          path: pipeline.png
