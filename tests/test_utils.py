@@ -1,15 +1,20 @@
 """
 Unit tests for the utils module.
 """
-import pandas as pd
-from src.utils import load_data, add_features
+
+from src.utils import load_data, add_features, load_config, get_dataset_path
 
 
 def test_load_data():
     """
     Test the load_data function to ensure it loads the dataset correctly.
     """
-    data = load_data('data/stock_data_sample.csv')
+    # Load configuration
+    config = load_config("config.yaml")
+
+    # Get the dataset path dynamically
+    data_path = get_dataset_path(config)
+    data = load_data(data_path)
     assert not data.empty, "Data should not be empty"
     assert 'Date' in data.columns, "Data should contain 'Date' column"
 
@@ -18,7 +23,13 @@ def test_add_features():
     Test the add_features function to ensure it adds new features correctly.
     """
     # Load a subset of the dataset (1000 rows)
-    data = pd.read_csv("data/stock_data_sample.csv").head(1000)
+    # Load configuration
+    config = load_config("config.yaml")
+
+    # Get the dataset path dynamically
+    data_path = get_dataset_path(config)
+    data = load_data(data_path)
+    data = data.head(1000)
 
     # Apply feature engineering
     enhanced_data = add_features(data)

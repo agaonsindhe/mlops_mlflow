@@ -1,0 +1,6 @@
+dataset:
+  preferred_path: "data/stocks_df.csv"
+  fallback_path: "data/stock_data_sample.csv"
+
+model:
+  path: "model.pkl"

@@ -26,15 +26,40 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pandas scikit-learn pylint pytest
 
-      # Step 4: Run Linting
-      - name: Run pylint
+      - name: Set Environment Variable
+        run: echo "AZURE_CONNECTION_STRING=${{ secrets.AZURE_CONNECTION_STRING }}" >> $GITHUB_ENV
+
+        # Step 4: Configure Azure Credentials for DVC
+      - name: Configure Azure Credentials
         run: |
-          pylint src tests --disable=C0304,C0305 --fail-under=9.5
+          dvc remote modify azure_remote connection_string '${{ secrets.AZURE_CONNECTION_STRING }}'
 
-      # Step 5: Run Tests
+      - name: Verify DVC remote configuration
+        run: dvc remote list
+
+      # Step 5: Pull DVC data (Local Setup)
+      - name: Pull DVC data
+        run: dvc pull
+
+      # Step 6: Run Linting
+      - name: Run Linting
+        run: |
+          pylint src tests --fail-under=9.5
+
+      # Step 7: Run Tests
       - name: Run Tests
         env:
           PYTHONPATH: ./src
         run: pytest
+
+      # Step 8: Visualize DVC Pipeline (Optional)
+      - name: Visualize DVC Pipeline
+        run: dvc dag 
+
+      # Step 9: Save DVC Pipeline Visualization (Optional)
+      - name: Save Pipeline Visualization
+        uses: actions/upload-artifact@v3
+        with:
+          name: dvc-pipeline
+          path: pipeline.png

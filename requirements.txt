@@ -5,3 +5,6 @@ pylint
 pandas
 scikit-learn
 mlflow
+dvc
+dvc[azure]
+azure-storage-blob
