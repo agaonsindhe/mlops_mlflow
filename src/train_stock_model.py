@@ -2,6 +2,7 @@
 This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
+import time
 from math import sqrt
 import pickle
 import warnings
@@ -10,7 +11,7 @@ import mlflow.sklearn
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, explained_variance_score
 from src.utils import add_features
 
 
@@ -45,14 +46,24 @@ def train_and_evaluate(
         model_path (str): Path to save the trained model.
 
     Returns:
-        tuple: RMSE and R² scores.
+        tuple: RMSE, R², MAE, training_time, evs scores.
     """
 
     # Start an MLflow experiment
     mlflow.set_experiment("Stock Price Prediction")
 
     with mlflow.start_run():
-    # Load and preprocess data
+        # Log experiment parameters
+        mlflow.log_param("model_type", "Linear Regression")
+        mlflow.log_param("learning_rate", 0.01)
+        mlflow.log_param("batch_size", 32)
+        mlflow.log_param("features_engineered", True)
+        mlflow.log_param("dataset_size", "800 MB")
+
+        # Start timing
+        start_time = time.time()
+
+        # Load and preprocess data
         data = load_data(data_path)
         data = add_features(data)
         features = ['Open', 'High', 'Low', 'Volume', 'Close_ma_3', 'Close_ma_7', 'Close_lag_1', 'Close_pct_change']
@@ -65,20 +76,23 @@ def train_and_evaluate(
         model = LinearRegression()
         model.fit(x_train, y_train)
 
+        # Stop timing
+        training_time = time.time() - start_time
+
         # Evaluate the model
         y_pred = model.predict(x_test)
         mse = mean_squared_error(y_test, y_pred)
         rmse = sqrt(mse)
+        mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
+        evs = explained_variance_score(y_test, y_pred)
 
-        print(f"Model RMSE: {rmse:.2f}")
-        print(f"Model R²: {r2:.2f}")
-
-        # Log parameters, metrics, and model
-        mlflow.log_param("features", features)
-        mlflow.log_param("model_type", "Linear Regression")
+        # Log metrics
         mlflow.log_metric("rmse", rmse)
+        mlflow.log_metric("mae", mae)
         mlflow.log_metric("r2", r2)
+        mlflow.log_metric("explained_variance", evs)
+        mlflow.log_metric("training_time", training_time)
 
         # Log the model as an artifact
         with open(model_path, 'wb') as f:
@@ -86,13 +100,14 @@ def train_and_evaluate(
         mlflow.sklearn.log_model(model, "model")
 
         print(f"Model RMSE: {rmse:.2f}")
+        print(f"Model MAE: {mae:.2f}")
         print(f"Model R²: {r2:.2f}")
-        print(f"Model saved to '{model_path}'")
+        print(f"Training Time: {training_time:.2f} seconds")
 
         # Save the model
         save_model(model, model_path)
 
-    return rmse, r2
+    return rmse, r2,mae, training_time, evs
 
 def save_model(model, model_path):
     """
