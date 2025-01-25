@@ -33,7 +33,7 @@ jobs:
         # Step 4: Configure Azure Credentials for DVC
       - name: Configure Azure Credentials
         run: |
-          dvc remote modify azure_remote connection_string ${{ secrets.AZURE_CONNECTION_STRING }}
+          dvc remote modify azure_remote connection_string '${{ secrets.AZURE_CONNECTION_STRING }}'
 
       - name: Verify DVC remote configuration
         run: dvc remote list
