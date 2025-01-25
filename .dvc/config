@@ -1,1 +1,4 @@
-dvc remote add -d azure_remote azure://dvc-data
+[core]
+    remote = azure_remote
+['remote "azure_remote"']
+    url = azure://dvc-data
