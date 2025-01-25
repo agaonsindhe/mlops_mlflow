@@ -35,6 +35,9 @@ jobs:
       - name: Verify DVC remote configuration
         run: dvc remote list
 
+      - name: Debug Remote Details
+        run: dvc remote modify azure_remote --show
+
       # Step 5: Pull DVC data (Local Setup)
       - name: Pull DVC data
         run: dvc pull
