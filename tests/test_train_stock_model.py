@@ -3,7 +3,6 @@ Unit tests for the train_stock_model module.
 """
 
 from src.train_stock_model import train_and_evaluate
-from src.utils import get_dataset_path, load_config
 
 
 def test_train_and_evaluate():

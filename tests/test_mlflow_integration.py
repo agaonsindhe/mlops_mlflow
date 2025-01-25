@@ -14,7 +14,7 @@ def test_mlflow_logging(mock_log_model, mock_log_metric, mock_log_param):
     """
     # Run the training script
     rmse, r2, mae, training_time, evs= train_and_evaluate(
-        data_path="data/stock_data_sample.csv",
+        config_path="config.yaml",
         model_path="model.pkl"
     )
 

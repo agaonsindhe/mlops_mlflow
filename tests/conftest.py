@@ -1,3 +1,6 @@
+"""
+Unit tests for the configuration.
+"""
 import subprocess
 import pytest
 

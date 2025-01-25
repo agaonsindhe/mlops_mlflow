@@ -3,6 +3,7 @@ This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
 import subprocess
+import sys
 import time
 from math import sqrt
 import pickle
@@ -27,7 +28,7 @@ def ensure_dvc_data():
         print("DVC data is up to date.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to pull DVC data: {e}")
-        exit(1)
+        sys.exit(1)
 
 def load_data(data_path):
     """

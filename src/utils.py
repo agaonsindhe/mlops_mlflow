@@ -1,9 +1,9 @@
 """
 This module contains utility functions for the stock model project.
 """
-import pandas as pd
 import os
 import glob
+import pandas as pd
 import yaml
 from azure.storage.blob import BlobServiceClient
 
@@ -52,12 +52,12 @@ def load_config(config_path="config.yaml"):
         dict: Configuration dictionary.
     """
     try:
-        with open(config_path, "r") as file:
+        with open(config_path, "r", encoding="utf-8") as file:
             return yaml.safe_load(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Config file not found: {config_path}")
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Config file not found: {config_path}") from exc
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing config file: {e}")
+        raise ValueError(f"Error parsing config file: {e}") from e
 
 def get_dataset_path(config):
     """
