@@ -55,7 +55,7 @@ jobs:
 
       # Step 8: Visualize DVC Pipeline (Optional)
       - name: Visualize DVC Pipeline
-        run: dvc dag --dot | dot -Tpng -o pipeline.png
+        run: dvc dag 
 
       # Step 9: Save DVC Pipeline Visualization (Optional)
       - name: Save Pipeline Visualization
