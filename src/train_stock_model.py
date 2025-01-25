@@ -2,6 +2,7 @@
 This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
+import subprocess
 import time
 from math import sqrt
 import pickle
@@ -17,6 +18,17 @@ from src.utils import add_features
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
 
+def ensure_dvc_data():
+    """
+    Ensure all DVC-tracked files are pulled before running the training.
+    """
+    try:
+        print("Pulling DVC data...")
+        subprocess.run(["dvc", "pull"], check=True)
+        print("DVC data is up to date.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to pull DVC data: {e}")
+        exit(1)
 
 def load_data(data_path):
     """
@@ -139,4 +151,8 @@ def split_data(data, features, target):
 
 
 if __name__ == "__main__":
+    # Ensure DVC data is available
+    ensure_dvc_data()
+
+    # Run training and evaluation
     train_and_evaluate()
