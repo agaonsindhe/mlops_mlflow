@@ -7,6 +7,7 @@ from src.train_stock_model import train_and_evaluate
 @patch("mlflow.log_param")
 @patch("mlflow.log_metric")
 @patch("mlflow.sklearn.log_model")
+
 def test_mlflow_logging(mock_log_model, mock_log_metric, mock_log_param):
     """
     Test that MLflow logs parameters, metrics, and model correctly.
@@ -14,7 +15,7 @@ def test_mlflow_logging(mock_log_model, mock_log_metric, mock_log_param):
     # Run the training script
     rmse, r2 = train_and_evaluate(
         data_path="data/stock_data_sample.csv",
-        model_path="test_model.pkl"
+        model_path="model.pkl"
     )
 
     # Assert that MLflow logging functions are called
@@ -22,4 +23,3 @@ def test_mlflow_logging(mock_log_model, mock_log_metric, mock_log_param):
     mock_log_metric.assert_any_call("rmse", rmse)
     mock_log_metric.assert_any_call("r2", r2)
     mock_log_model.assert_called_once()
-    
