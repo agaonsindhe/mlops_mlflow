@@ -1,0 +1,1 @@
+dvc remote add -d azure_remote azure://dvc-data
