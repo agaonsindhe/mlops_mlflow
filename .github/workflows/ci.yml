@@ -58,14 +58,3 @@ jobs:
         env:
           PYTHONPATH: ./src
         run: pytest
-
-      # Step 10: Visualize DVC Pipeline (Optional)
-      - name: Visualize DVC Pipeline
-        run: dvc dag
-
-      # Step 11: Save Pipeline Visualization (Optional)
-      - name: Save Pipeline Visualization
-        uses: actions/upload-artifact@v3
-        with:
-          name: dvc-pipeline
-          path: pipeline.png
