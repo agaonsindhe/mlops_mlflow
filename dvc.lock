@@ -5,8 +5,8 @@ stages:
     deps:
     - path: data/stocks_df.csv
       hash: md5
-      md5: b07ed17a774396c5319fa5f701aaa78a
-      size: 395768320
+      md5: 75bc7d18328a47885cd9c7cde0b29cf6
+      size: 228772099
     - path: src/train_stock_model.py
       hash: md5
       md5: 4f8cad12b335e783fa5f083c4264c776
@@ -14,5 +14,5 @@ stages:
     outs:
     - path: model.pkl
       hash: md5
-      md5: cc0542d149175e2601dc5393386619e7
-      size: 652
+      md5: e452959c1f2b1483cbe8ad5d7eb21867
+      size: 588
