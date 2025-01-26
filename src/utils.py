@@ -76,12 +76,12 @@ def get_config_path(config):
     fallback_path = config["dataset"]["fallback_path"]
     model_path = config["model"]["path"]
     # Check if preferred file exists
-    if os.path.exists(preferred_path) and os.path.exists(model_path):
+    if os.path.exists(preferred_path):
         print(f"Using preferred dataset: {preferred_path}")
         return preferred_path, model_path
 
     # Check if fallback file exists
-    if os.path.exists(fallback_path) and os.path.exists(model_path):
+    if os.path.exists(fallback_path):
         print(f"Using fallback dataset: {fallback_path}")
         return fallback_path, model_path
 
