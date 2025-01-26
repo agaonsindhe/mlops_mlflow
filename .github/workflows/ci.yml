@@ -40,15 +40,7 @@ jobs:
       - name: Reproduce DVC Pipeline
         run: dvc repro
 
-      # Step 7: Push DVC Updates
-      - name: Push DVC Updates
-        run: |
-          dvc push
-          git add dvc.lock
-          git commit -m "Updated model.pkl and pipeline outputs"
-          git push origin ${{ github.ref_name }}
-
-      # Step 8: Run Linting
+      # Step 7: Run Linting
       - name: Run Linting
         run: |
           pylint src tests --fail-under=8.0
