@@ -2,191 +2,174 @@
 This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
-import subprocess
-import sys
-import time
-from math import sqrt
 import pickle
-import warnings
+import dvc.api
+from datetime import datetime
+from math import sqrt
 import mlflow
-import mlflow.sklearn
-import pandas as pd
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, explained_variance_score
-from src.utils import add_features, load_config, get_dataset_path
+from mlflow.models import infer_signature
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_variance_score, r2_score
+from src.dataset_utils import load_data, get_dataset_version
+from src.preprocess_data import preprocess_data
+from src.utils import load_config, get_config_path
+from src.logging_utils import log_predicted_vs_actual, log_residual_plot, log_metric_trend
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="mlflow.gateway.config")
-
-def ensure_dvc_data():
+global input_example, signature, x_test, y_test
+def evaluate_model(model, x_test_param, y_test_param):
     """
-    Ensure all DVC-tracked files are pulled before running the training.
+    Evaluate the model on test data and return metrics.
     """
-    try:
-        print("Pulling DVC data...")
-        subprocess.run(["dvc", "pull"], check=True)
-        print("DVC data is up to date.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to pull DVC data: {e}")
-        sys.exit(1)
+    y_pred = model.predict(x_test_param)
+    mse = mean_squared_error(y_test_param, y_pred)
+    rmse = sqrt(mse)
+    mae = mean_absolute_error(y_test_param, y_pred)
+    evs = explained_variance_score(y_test_param, y_pred)
+    r2 = r2_score(y_test_param, y_pred)
 
-def load_data(data_path):
+    return {"rmse": rmse, "mae": mae, "evs": evs, "r2": r2}
+
+def train_and_log_runs(config_path="config.yaml"):
     """
-    Load stock market data from a CSV file.
-
-    Args:
-        data_path (str): Path to the dataset.
-
-    Returns:
-        pd.DataFrame: Loaded dataset.
+    Train and log three different Ridge regression models with varying hyperparameters and log the best model.
     """
-    data = pd.read_csv(data_path)
-    data['Date'] = pd.to_datetime(data['Date'])
-    data.sort_values(by='Date', inplace=True)
-    return data
+    # Start MLflow Experiment
+
+    experiment_name = f"Stock Price Prediction - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    mlflow.set_experiment(experiment_name)
 
 
-def train_and_evaluate(config_path="config.yaml", model_path="model.pkl"):
-    """
-    Train and evaluate a Linear Regression model.
-
-    Args:
-        config_path (str): Path to the configuration file.
-        model_path (str): Path to save the trained model.
-
-    Returns:
-        tuple: (rmse, r2, mae, training_time, evs)
-    """
     # Load configuration
     config = load_config(config_path)
 
     # Get the dataset path dynamically
-    data_path = get_dataset_path(config)
+    data_path, model_path = get_config_path(config)
 
-    # Start an MLflow experiment
-    mlflow.set_experiment("Stock Price Prediction")
-
-    with mlflow.start_run():
-        mlflow.log_param("model_type", "Ridge Regression")
-        mlflow.log_param("dataset_size", "200 MB")
-        mlflow.log_param("features_engineered", True)
-        mlflow.log_param("hyperparameter_tuning", True)
-        mlflow.log_param("tuning_method", "GridSearchCV")
-
-    # Start timing
-    start_time = time.time()
-
+    dataset_version = get_dataset_version(data_path)
 
     # Load and preprocess data
-    data = load_data(data_path)
-    data = add_features(data)
-    features = ['Open', 'High', 'Low', 'Volume', 'Close_ma_3', 'Close_ma_7', 'Close_lag_1', 'Close_pct_change']
-    target = 'Close'
+    df = load_data(data_path)
 
-    # Split the dataset
-    x_train, x_test, y_train, y_test = split_data(data, features, target)
+    df = preprocess_data(df)
 
-    # Define model and expanded parameter grid
-    model = Ridge()
-    param_grid = {
-       "alpha": [0.01, 0.1, 1.0],
-       "solver": ["lsqr", "svd", "cholesky"],
-       "max_iter": [50, 50, 50],
-       "tol": [1e-4, 1e-3, 1e-2],
-    }
+    # Dynamically select features based on existing columns
+    required_features = ['Open', 'High', 'Low', 'Volume', 'Close_ma_3', 'Close_ma_7', 'Close_lag_1']
+    features = [col for col in required_features if col in df.columns]
+    random_states = [42, 84, 123]
+    if not features:
+        raise ValueError("No valid features found in the dataset. Check the dataset for missing columns.")
 
-    # Perform GridSearchCV
-    random_search = RandomizedSearchCV(model, param_grid, n_iter=50,scoring="neg_mean_squared_error", cv=2, verbose=1,random_state=42)
-    random_search.fit(x_train, y_train)
+    target = 'Close_pct_change'
+    if 'Close_pct_change' not in df.columns:
+        df['Close_pct_change'] = df['Close'].pct_change()
 
-    # Log results of all hyperparameter combinations
-    cv_results = random_search.cv_results_
-    for i in range(len(cv_results["params"])):
-        with mlflow.start_run(nested=True):  # Nested runs for each combination
-            # Log the hyperparameters for this combination
-            mlflow.log_params(cv_results["params"][i])
+    # Drop NaN values and align indices between features and target
+    features = df[features].dropna()
+    target = df[target].dropna()
 
-            # Log mean and std of scores
-            mean_test_score = cv_results["mean_test_score"][i]
-            std_test_score = cv_results["std_test_score"][i]
+    # Align indices to ensure consistent rows
+    common_indices = features.index.intersection(target.index)
+    features = features.loc[common_indices]
+    target = target.loc[common_indices]
 
-            mlflow.log_metric("mean_test_score", -mean_test_score)  # Convert to positive
-            mlflow.log_metric("std_test_score", std_test_score)
+    # Define hyperparameters for three runs
+    runs = [
+        {"alpha": 0.1, "solver": "auto"},
+        {"alpha": 1.0, "solver": "svd"},
+        {"alpha": 10.0, "solver": "cholesky"},
+    ]
 
-            # Optionally, log fold-wise scores
-            for j in range(random_search.cv):
-                mlflow.log_metric(f"split_{j}_test_score", -cv_results[f"split{j}_test_score"][i])
+    best_model = None
+    best_metrics = None
+    best_run_id = None
 
-    # Log the best model
-    best_model = random_search.best_estimator_
-    best_params = random_search.best_params_
+    # Run experiments
+    for i, params in enumerate(runs):
 
-    # Stop timing
-    training_time = time.time() - start_time
+        x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=random_states[i])
+        signature, input_example = infer_mlflow_signature(x_train)
+
+        with mlflow.start_run(nested=True):
+            # Initialize model with current parameters
+            model = Ridge(alpha=params["alpha"], solver=params["solver"])
+            model.fit(x_train, y_train)
+
+            # Evaluate model
+            metrics = evaluate_model(model, x_test, y_test)
+
+            # Log parameters and metrics
+            mlflow.log_param("run_index", i + 1)
+            mlflow.log_param("alpha", params["alpha"])
+            mlflow.log_param("solver", params["solver"])
+            mlflow.log_param("dataset_version", dataset_version)
+            mlflow.log_metric("rmse", metrics["rmse"])
+            mlflow.log_metric("mae", metrics["mae"])
+            mlflow.log_metric("evs", metrics["evs"])
+            mlflow.log_metric("r2", metrics["r2"])
+
+            # Log the trained model
+            mlflow.sklearn.log_model(model, f"model_run_{i + 1}",input_example=input_example,signature=signature)
+            # Append metrics to the runs object
+            params.update(metrics)
+            # Log graphs
+            log_predicted_vs_actual(y_test, model.predict(x_test))
+            log_residual_plot(y_test, model.predict(x_test))
+
+            # Update the best model if applicable
+            if best_metrics is None or best_metrics["rmse"] > metrics["rmse"]:
+                best_model = model
+                best_metrics = metrics
+                best_run_id = mlflow.active_run().info.run_id
+
+    # Log the best model as a separate artifact
+    if best_model:
+        with mlflow.start_run(run_id=best_run_id, nested=True):
+            mlflow.log_param("best_model", True)
+            mlflow.log_metric("best_rmse", best_metrics["rmse"])
+            mlflow.log_metric("best_mae", best_metrics["mae"])
+            mlflow.log_metric("best_evs", best_metrics["evs"])
+            mlflow.log_metric("best_r2", best_metrics["r2"])
+            with open(model_path, "wb") as f:
+                pickle.dump(best_model, f)
+
+            mlflow.sklearn.log_model(best_model, "best_model",input_example=input_example,signature=signature)
+            mlflow.log_artifact("model.pkl",artifact_path="models")
+            y_pred_best = best_model.predict(x_test)
+            log_predicted_vs_actual(y_test, y_pred_best, run_name="Predicted vs Actual - Best Model")
+            log_residual_plot(y_test, y_pred_best, run_name="Residual Plot - Best Model")
+
+    print(f"Best model saved to {model_path}")
+    print(f"Best metrics: {best_metrics}")
 
 
-    # Evaluate the model
-    y_pred = best_model.predict(x_test)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = sqrt(mse)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    evs = explained_variance_score(y_test, y_pred)
-
-    with mlflow.start_run(nested=True):  # Log the final best model as a separate run
-        # Log metrics
-        mlflow.log_params(best_params)
-        mlflow.log_metric("rmse", rmse)
-        mlflow.log_metric("mae", mae)
-        mlflow.log_metric("r2", r2)
-        mlflow.log_metric("explained_variance", evs)
-        mlflow.sklearn.log_model(best_model, "model")
-
-    print(f"Model RMSE: {rmse:.2f}")
-    print(f"Model MAE: {mae:.2f}")
-    print(f"Model R²: {r2:.2f}")
-    print(f"Training Time: {training_time:.2f} seconds")
-
-    # Save the model
-    save_model(best_model, model_path)
-    # Log training time
-    total_time = time.time() - start_time
-    mlflow.log_metric("training_time", total_time)
-
-    return rmse, r2,mae, training_time, evs
-
-def save_model(model, model_path):
+def infer_mlflow_signature(x_train):
     """
-    Saves the trained model to a file.
+        Infers an MLflow signature for a given training dataset.
 
-    Args:
-        model: Trained model object.
-        model_path (str): Path to save the model.
+        Parameters:
+        -----------
+        x_train : array-like or DataFrame
+            Training dataset where each row is an example and each column is a feature.
+            The first row is used to create an input example.
+
+        Returns:
+        --------
+        signature : mlflow.models.signature.ModelSignature
+        input_example : array-like or DataFrame
     """
-    with open(model_path, 'wb') as f:
-        pickle.dump(model, f)
-    print(f"Model saved to '{model_path}'")
+    input_example = x_train[:1]
+    placeholder_model = Ridge(alpha=1.0)
+    try:
+        placeholder_predictions = placeholder_model.predict(input_example)
+    except:
+        placeholder_predictions = [0]
+    signature = infer_signature(input_example, placeholder_predictions)
 
-def split_data(data, features, target):
-    """
-    Splits the dataset into training and testing sets.
-
-    Args:
-        data (pd.DataFrame): The dataset.
-        features (list): List of feature column names.
-        target (str): Target column name.
-
-    Returns:
-        tuple: X_train, X_test, y_train, y_test
-    """
-    features_data = data[features]
-    target_data = data[target]
-    return train_test_split(features_data, target_data, test_size=0.2, random_state=42)
+    return signature, input_example
 
 
 if __name__ == "__main__":
-    # Ensure DVC data is available
-    ensure_dvc_data()
 
     # Run training and evaluation
-    train_and_evaluate()
+    train_and_log_runs("config.yaml")

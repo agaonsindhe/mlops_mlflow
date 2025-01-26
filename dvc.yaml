@@ -6,7 +6,3 @@ stages:
     - src/train_stock_model.py
     outs:
     - model.pkl
-  evaluate_model:
-    cmd: echo "Evaluating the model"
-    deps:
-    - model.pkl
