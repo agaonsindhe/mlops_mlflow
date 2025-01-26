@@ -1,0 +1,5 @@
+[core]
+    remote = azure_remote
+['remote "azure_remote"']
+    url = azure://dvc-data
+    connection_string = DefaultEndpointsProtocol=https;AccountName=dvcbits;AccountKey=Aqg+SaO3zcgjHITtLOjKRGW6Q3b8CUD/uwN3WmfQbJ9quzFtPyq8U9+WeHo7iPil3TcQi0AiSFyP+ASt6TwsJw==;EndpointSuffix=core.windows.net

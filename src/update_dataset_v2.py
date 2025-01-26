@@ -25,5 +25,5 @@ def add_features_to_dataset(file_path):
 
 if __name__ == "__main__":
     # Update the dataset in place
-    dataset_path = "data/stocks_df.csv"
-    add_features_to_dataset(dataset_path)
+    DATASET_PATH = "data/stocks_df.csv"
+    add_features_to_dataset(DATASET_PATH)
