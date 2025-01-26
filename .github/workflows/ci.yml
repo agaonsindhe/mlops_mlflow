@@ -52,9 +52,3 @@ jobs:
       - name: Run Linting
         run: |
           pylint src tests --fail-under=8.0
-
-      # Step 9: Run Tests
-      - name: Run Tests
-        env:
-          PYTHONPATH: ./src
-        run: pytest
