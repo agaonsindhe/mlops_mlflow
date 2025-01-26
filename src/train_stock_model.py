@@ -3,6 +3,7 @@ This module contains functions to train and evaluate a Linear Regression model
 for stock price prediction using historical data.
 """
 import pickle
+import dvc.api
 from datetime import datetime
 from math import sqrt
 import mlflow
@@ -10,7 +11,7 @@ from mlflow.models import infer_signature
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_variance_score, r2_score
-from src.dataset_utils import load_data
+from src.dataset_utils import load_data, get_dataset_version
 from src.preprocess_data import preprocess_data
 from src.utils import load_config, get_config_path
 from src.logging_utils import log_predicted_vs_actual, log_residual_plot, log_metric_trend
@@ -38,11 +39,14 @@ def train_and_log_runs(config_path="config.yaml"):
     experiment_name = f"Stock Price Prediction - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     mlflow.set_experiment(experiment_name)
 
+
     # Load configuration
     config = load_config(config_path)
 
     # Get the dataset path dynamically
     data_path, model_path = get_config_path(config)
+
+    dataset_version = get_dataset_version(data_path)
 
     # Load and preprocess data
     df = load_data(data_path)
@@ -98,7 +102,7 @@ def train_and_log_runs(config_path="config.yaml"):
             mlflow.log_param("run_index", i + 1)
             mlflow.log_param("alpha", params["alpha"])
             mlflow.log_param("solver", params["solver"])
-            mlflow.log_param("dataset_version", "v1")
+            mlflow.log_param("dataset_version", dataset_version)
             mlflow.log_metric("rmse", metrics["rmse"])
             mlflow.log_metric("mae", metrics["mae"])
             mlflow.log_metric("evs", metrics["evs"])
@@ -130,13 +134,10 @@ def train_and_log_runs(config_path="config.yaml"):
                 pickle.dump(best_model, f)
 
             mlflow.sklearn.log_model(best_model, "best_model",input_example=input_example,signature=signature)
+            mlflow.log_artifact("model.pkl",artifact_path="models")
             y_pred_best = best_model.predict(x_test)
             log_predicted_vs_actual(y_test, y_pred_best, run_name="Predicted vs Actual - Best Model")
             log_residual_plot(y_test, y_pred_best, run_name="Residual Plot - Best Model")
-
-    print(f"Runs:{runs}")
-    # Log metric trends across all runs
-    log_metric_trend(runs, metric_name="rmse")
 
     print(f"Best model saved to {model_path}")
     print(f"Best metrics: {best_metrics}")
